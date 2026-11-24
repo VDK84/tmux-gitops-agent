@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "==> Iniciant tmux-gitops-agent (versió: ${APP_VERSION:-dev})..."
+
 # 1. Confiar en la CA interna (step-ca) si està muntada al sistema
 if [ -d /usr/local/share/ca-certificates ] && [ "$(ls -A /usr/local/share/ca-certificates 2>/dev/null)" ]; then
     update-ca-certificates >/dev/null 2>&1 || true

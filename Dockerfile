@@ -8,8 +8,10 @@ ARG TEA_VERSION=0.9.2
 ARG GITLEAKS_VERSION=8.24.0
 ARG OPENBAO_VERSION=2.1.0
 ARG STEP_CLI_VERSION=0.28.2
+ARG APP_VERSION=0.1.0
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV APP_VERSION=${APP_VERSION}
 
 # 1. Paquets base del sistema, xarxa, SSH, crypto i cerca ràpida
 RUN apt-get update && apt-get install -y --no-install-recommends \
