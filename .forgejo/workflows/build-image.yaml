@@ -173,9 +173,14 @@ jobs:
           VER_MAJ: v${{ steps.semver.outputs.major }}
           VER_MIN: v${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}
           GIT_SHA: ${{ github.sha }}
-          ACTOR: ${{ github.actor }}
-          TOKEN: ${{ secrets.REGISTRY_TOKEN || secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: vdk84
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: |
+          if [ -z "$REGISTRY_TOKEN" ]; then
+            echo "❌ Error: el secret REGISTRY_TOKEN no està definit a Forgejo Actions!"
+            exit 1
+          fi
+
           FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
 
           echo "Iniciant build amb podman --remote connectat a $CONTAINER_HOST..."
@@ -193,6 +198,9 @@ jobs:
 
           echo "Pujant etiquetes al registre Forgejo..."
           for tag in latest "${VER_TAG}" "${VER_NUM}" "${VER_MIN}" "${VER_MAJ}" "${GIT_SHA}"; do
-            podman --remote push --tls-verify=false --creds "${ACTOR}:${TOKEN}" "${FULL_IMAGE}:${tag}"
+            podman --remote push \
+              --tls-verify=false \
+              --creds "${REGISTRY_USER}:${REGISTRY_TOKEN}" \
+              "${FULL_IMAGE}:${tag}"
           done
           echo "Imatge publicada correctament!"
