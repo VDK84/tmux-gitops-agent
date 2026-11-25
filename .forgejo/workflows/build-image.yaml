@@ -166,13 +166,6 @@ jobs:
             -d "$RELEASE_PAYLOAD" \
             "${SERVER}/api/v1/repos/${REPO}/releases" || true
 
-      - name: Log in to Forgejo Container Registry via podman --remote
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTOR: ${{ github.actor }}
-        run: |
-          echo "$TOKEN" | podman --remote login "$REGISTRY" -u "$ACTOR" --password-stdin --tls-verify=false
-
       - name: Build and push Container Image via podman --remote
         env:
           VER_TAG: ${{ steps.semver.outputs.new_tag }}
@@ -180,6 +173,8 @@ jobs:
           VER_MAJ: v${{ steps.semver.outputs.major }}
           VER_MIN: v${{ steps.semver.outputs.major }}.${{ steps.semver.outputs.minor }}
           GIT_SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          TOKEN: ${{ secrets.REGISTRY_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
 
@@ -198,6 +193,6 @@ jobs:
 
           echo "Pujant etiquetes al registre Forgejo..."
           for tag in latest "${VER_TAG}" "${VER_NUM}" "${VER_MIN}" "${VER_MAJ}" "${GIT_SHA}"; do
-            podman --remote push --tls-verify=false "${FULL_IMAGE}:${tag}"
+            podman --remote push --tls-verify=false --creds "${ACTOR}:${TOKEN}" "${FULL_IMAGE}:${tag}"
           done
           echo "Imatge publicada correctament!"
