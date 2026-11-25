@@ -9,6 +9,14 @@ on:
       - 'entrypoint.sh'
   workflow_dispatch:
     inputs:
+      runner:
+        description: 'Runner d execució (tunejat per defecte o node-slim de backup)'
+        required: false
+        default: 'rusc-runner'
+        type: choice
+        options:
+          - rusc-runner
+          - node-slim
       bump_type:
         description: 'Tipus d increment SemVer manual (opcional)'
         required: false
@@ -27,12 +35,20 @@ permissions:
 env:
   REGISTRY: git.rusc.local
   IMAGE_NAME: vdk84/agent-workspace
+  CONTAINER_HOST: unix:///run/user/1000/podman/podman.sock
 
 jobs:
   build-and-publish:
     name: SemVer Bump & Container Build
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'rusc-runner' }}
     steps:
+      - name: Install CI dependencies (node-slim fallback)
+        if: ${{ inputs.runner == 'node-slim' }}
+        run: |
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+            git curl jq ca-certificates podman
+          git config --global http.sslVerify false
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -149,19 +165,14 @@ jobs:
             -d "$RELEASE_PAYLOAD" \
             "${SERVER}/api/v1/repos/${REPO}/releases" || true
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          buildkitd-flags: "--oci-worker-no-process-sandbox"
+      - name: Log in to Forgejo Container Registry via podman --remote
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          echo "$TOKEN" | podman --remote login "$REGISTRY" -u "$ACTOR" --password-stdin --tls-verify=false
 
-      - name: Log in to Forgejo Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Container Image
+      - name: Build and push Container Image via podman --remote
         env:
           VER_TAG: ${{ steps.semver.outputs.new_tag }}
           VER_NUM: ${{ steps.semver.outputs.new_version }}
@@ -171,16 +182,10 @@ jobs:
         run: |
           FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
 
-          # Si el binari podman no és al PATH, usem el socket via crida API o insta·lem podman-remote/buildah
-          if command -v podman >/dev/null 2>&1; then
-            BUILDER="podman"
-          else
-            # Forcem el driver natiu (sense docker-container) eliminant el builder per defecte
-            docker buildx rm default 2>/dev/null || true
-            BUILDER="docker"
-          fi
+          echo "Iniciant build amb podman --remote connectat a $CONTAINER_HOST..."
 
-          $BUILDER build \
+          podman --remote build \
+            --tls-verify=false \
             --build-arg APP_VERSION="${VER_NUM}" \
             -t "${FULL_IMAGE}:latest" \
             -t "${FULL_IMAGE}:${VER_TAG}" \
@@ -190,6 +195,8 @@ jobs:
             -t "${FULL_IMAGE}:${GIT_SHA}" \
             .
 
+          echo "Pujant etiquetes al registre Forgejo..."
           for tag in latest "${VER_TAG}" "${VER_NUM}" "${VER_MIN}" "${VER_MAJ}" "${GIT_SHA}"; do
-            $BUILDER push "${FULL_IMAGE}:${tag}"
+            podman --remote push --tls-verify=false "${FULL_IMAGE}:${tag}"
           done
+          echo "Imatge publicada correctament!"
