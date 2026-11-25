@@ -158,7 +158,7 @@ A les execucions manuals via `workflow_dispatch`, es pot triar el runner desitja
 - Crea automàticament una **Release** a Forgejo amb el resum del registre de canvis (changelog) associat a la versió.
 
 ### 4. Publicació al Forgejo Container Registry amb Podman Remote
-Construeix la imatge amb `podman --remote` connectat a `unix:///run/user/1000/podman/podman.sock` injectant l'argument `APP_VERSION=${NEW_VERSION}` i publica les següents etiquetes al registre intern:
+Construeix la imatge amb `podman --remote` connectat a `unix:///var/run/docker.sock` injectant l'argument `APP_VERSION=${NEW_VERSION}` i publica les següents etiquetes al registre intern:
 * `git.rusc.local/vdk84/agent-workspace:latest`
 * `git.rusc.local/vdk84/agent-workspace:vX.Y.Z` (ex: `v0.2.0`)
 * `git.rusc.local/vdk84/agent-workspace:X.Y.Z` (ex: `0.2.0`)

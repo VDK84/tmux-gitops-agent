@@ -7,6 +7,7 @@ on:
     paths:
       - 'Dockerfile'
       - 'entrypoint.sh'
+      - '.forgejo/workflows/**'
   workflow_dispatch:
     inputs:
       runner:
@@ -35,7 +36,7 @@ permissions:
 env:
   REGISTRY: git.rusc.local
   IMAGE_NAME: vdk84/agent-workspace
-  CONTAINER_HOST: unix:///run/user/1000/podman/podman.sock
+  CONTAINER_HOST: unix:///var/run/docker.sock
 
 jobs:
   build-and-publish:
