@@ -171,7 +171,16 @@ jobs:
         run: |
           FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}"
 
-          docker build \
+          # Si el binari podman no és al PATH, usem el socket via crida API o insta·lem podman-remote/buildah
+          if command -v podman >/dev/null 2>&1; then
+            BUILDER="podman"
+          else
+            # Forcem el driver natiu (sense docker-container) eliminant el builder per defecte
+            docker buildx rm default 2>/dev/null || true
+            BUILDER="docker"
+          fi
+
+          $BUILDER build \
             --build-arg APP_VERSION="${VER_NUM}" \
             -t "${FULL_IMAGE}:latest" \
             -t "${FULL_IMAGE}:${VER_TAG}" \
@@ -182,5 +191,5 @@ jobs:
             .
 
           for tag in latest "${VER_TAG}" "${VER_NUM}" "${VER_MIN}" "${VER_MAJ}" "${GIT_SHA}"; do
-            docker push "${FULL_IMAGE}:${tag}"
+            $BUILDER push "${FULL_IMAGE}:${tag}"
           done
