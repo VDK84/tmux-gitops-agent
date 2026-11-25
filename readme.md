@@ -137,21 +137,28 @@ spec:
 
 ## 🏷️ Versionat Semàntic Automàtic (SemVer) & CI/CD
 
-El workflow de Forgejo Actions ([.forgejo/workflows/build-image.yaml](.forgejo/workflows/build-image.yaml)) s'encarrega automàticament del cicle complet de versions SemVer i de la construcció de la imatge quan es fa un `push` a la branca `main`:
+El workflow de Forgejo Actions ([.forgejo/workflows/build-image.yaml](.forgejo/workflows/build-image.yaml)) s'encarrega automàticament del cicle complet de versions SemVer i de la construcció de la imatge quan es fa un `push` a la branca `main` o mitjançant `workflow_dispatch`:
 
-### 1. Detecció d'etiquetes i càlcul de versió
+### 1. Doble Runner Efímer (Podman Rootless)
+Per optimitzar el temps d'execució i garantir màxima fiabilitat eliminant Docker Buildx en entorns rootless, el workflow suporta dos runners:
+* **`rusc-runner`** (Per defecte): Imatge tunejada (`git.rusc.local/vdk84/forgejo-runner-image:latest`) amb totes les eines (`podman`, `git`, `curl`, `jq`) i la CA de Smallstep preinstal·lades.
+* **`node-slim`** (Fallback / Bootstrap): Imatge oficial `node:22-bookworm-slim` que executa un pas previ de bootstrap per instal·lar les eines necessàries abans del *checkout*.
+
+A les execucions manuals via `workflow_dispatch`, es pot triar el runner desitjat amb el desplegable `runner`.
+
+### 2. Detecció d'etiquetes i càlcul de versió
 - Analitza les etiquetes Git remotes existents (`vX.Y.Z`).
 - Avalua els missatges dels commits des de l'última etiqueta segons l'estàndard **Conventional Commits**:
   - `BREAKING CHANGE:` o prefix `!` (ex: `feat!:`, `fix!:`) o clau `#major` ➔ **Increment MAJOR** (`v1.0.0` ➔ `v2.0.0`).
   - Prefix `feat:` o `feat(...)` o clau `#minor` ➔ **Increment MINOR** (`v0.1.0` ➔ `v0.2.0`).
   - Prefixos `fix:`, `chore:`, `ci:`, `docs:`, `refactor:`, etc. (o clau `#patch`) ➔ **Increment PATCH** (`v0.1.0` ➔ `v0.1.1`).
 
-### 2. Creació d'etiqueta Git i Release a Forgejo
+### 3. Creació d'etiqueta Git i Release a Forgejo
 - Crea el tag anotat Git (`vX.Y.Z`) i el puja automàticament al repositori Forgejo amb el bot de CI (`[skip ci]`).
 - Crea automàticament una **Release** a Forgejo amb el resum del registre de canvis (changelog) associat a la versió.
 
-### 3. Publicació al Forgejo Container Registry
-Construeix la imatge Docker injectant l'argument `APP_VERSION=${NEW_VERSION}` i publica les següents etiquetes al registre intern:
+### 4. Publicació al Forgejo Container Registry amb Podman Remote
+Construeix la imatge amb `podman --remote` connectat a `unix:///run/user/1000/podman/podman.sock` injectant l'argument `APP_VERSION=${NEW_VERSION}` i publica les següents etiquetes al registre intern:
 * `git.rusc.local/vdk84/agent-workspace:latest`
 * `git.rusc.local/vdk84/agent-workspace:vX.Y.Z` (ex: `v0.2.0`)
 * `git.rusc.local/vdk84/agent-workspace:X.Y.Z` (ex: `0.2.0`)
@@ -159,7 +166,7 @@ Construeix la imatge Docker injectant l'argument `APP_VERSION=${NEW_VERSION}` i 
 * `git.rusc.local/vdk84/agent-workspace:vX` (ex: `v0`)
 * `git.rusc.local/vdk84/agent-workspace:<commit-sha>`
 
-### 4. Actualització del Pod a K3s
+### 5. Actualització del Pod a K3s
 Per forçar el reinici del deployment amb la nova imatge construïda:
 
 ```bash

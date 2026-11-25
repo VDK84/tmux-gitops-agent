@@ -39,8 +39,8 @@ RUN curl -fsSL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${TARGETA
     -o /usr/local/bin/argocd && chmod +x /usr/local/bin/argocd \
     && curl -fsSL "https://dl.gitea.com/tea/${TEA_VERSION}/tea-${TEA_VERSION}-linux-${TARGETARCH}" \
     -o /usr/local/bin/tea && chmod +x /usr/local/bin/tea \
-    && curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/bao_${OPENBAO_VERSION}_Linux_${TARGETARCH}.tar.gz" \
-    | tar -xz -C /usr/local/bin bao && chmod +x /usr/local/bin/bao \
+    && curl -fsSL "https://github.com/openbao/openbao/releases/download/v${OPENBAO_VERSION}/bao_${OPENBAO_VERSION}_linux_${TARGETARCH}.deb" \
+    -o /tmp/bao.deb && dpkg -i /tmp/bao.deb && rm -f /tmp/bao.deb \
     && curl -fsSL "https://dl.smallstep.com/gh-release/cli/gh-release-header/v${STEP_CLI_VERSION}/step_linux_${STEP_CLI_VERSION}_${TARGETARCH}.tar.gz" \
     | tar -xz --strip-components=2 -C /usr/local/bin "step_${STEP_CLI_VERSION}/bin/step" && chmod +x /usr/local/bin/step \
     && curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
