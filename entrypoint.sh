@@ -56,7 +56,7 @@ mkdir -p /workspace
 
 for repo in "${REPOS[@]}"; do
     if [ ! -d "/workspace/${repo}" ]; then
-        git clone "${FORGEJO_HOST}/VDK84/${repo}.git" "/workspace/${repo}" || true
+        git clone "${FORGEJO_HOST}/Rusc/${repo}.git" "/workspace/${repo}" || true
         if [ -d "/workspace/${repo}/.git/hooks" ]; then
             printf '#!/bin/sh\ngitleaks protect --staged --verbose\n' > "/workspace/${repo}/.git/hooks/pre-commit"
             chmod +x "/workspace/${repo}/.git/hooks/pre-commit"

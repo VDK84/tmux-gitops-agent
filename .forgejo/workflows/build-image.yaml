@@ -35,7 +35,7 @@ permissions:
 
 env:
   REGISTRY: git.rusc.local
-  IMAGE_NAME: vdk84/agent-workspace
+  IMAGE_NAME: rusc/agent-workspace
   CONTAINER_HOST: unix:///var/run/docker.sock
 
 jobs:

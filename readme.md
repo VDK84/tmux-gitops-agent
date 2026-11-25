@@ -141,7 +141,7 @@ El workflow de Forgejo Actions ([.forgejo/workflows/build-image.yaml](.forgejo/w
 
 ### 1. Doble Runner Efímer (Podman Rootless)
 Per optimitzar el temps d'execució i garantir màxima fiabilitat eliminant Docker Buildx en entorns rootless, el workflow suporta dos runners:
-* **`rusc-runner`** (Per defecte): Imatge tunejada (`git.rusc.local/vdk84/forgejo-runner-image:latest`) amb totes les eines (`podman`, `git`, `curl`, `jq`) i la CA de Smallstep preinstal·lades.
+* **`rusc-runner`** (Per defecte): Imatge tunejada (`git.rusc.local/rusc/forgejo-runner-image:latest`) amb totes les eines (`podman`, `git`, `curl`, `jq`) i la CA de Smallstep preinstal·lades.
 * **`node-slim`** (Fallback / Bootstrap): Imatge oficial `node:22-bookworm-slim` que executa un pas previ de bootstrap per instal·lar les eines necessàries abans del *checkout*.
 
 A les execucions manuals via `workflow_dispatch`, es pot triar el runner desitjat amb el desplegable `runner`.
@@ -159,12 +159,12 @@ A les execucions manuals via `workflow_dispatch`, es pot triar el runner desitja
 
 ### 4. Publicació al Forgejo Container Registry amb Podman Remote
 Construeix la imatge amb `podman --remote` connectat a `unix:///var/run/docker.sock` injectant l'argument `APP_VERSION=${NEW_VERSION}` i publica les següents etiquetes al registre intern:
-* `git.rusc.local/vdk84/agent-workspace:latest`
-* `git.rusc.local/vdk84/agent-workspace:vX.Y.Z` (ex: `v0.2.0`)
-* `git.rusc.local/vdk84/agent-workspace:X.Y.Z` (ex: `0.2.0`)
-* `git.rusc.local/vdk84/agent-workspace:vX.Y` (ex: `v0.2`)
-* `git.rusc.local/vdk84/agent-workspace:vX` (ex: `v0`)
-* `git.rusc.local/vdk84/agent-workspace:<commit-sha>`
+* `git.rusc.local/rusc/agent-workspace:latest`
+* `git.rusc.local/rusc/agent-workspace:vX.Y.Z` (ex: `v0.2.0`)
+* `git.rusc.local/rusc/agent-workspace:X.Y.Z` (ex: `0.2.0`)
+* `git.rusc.local/rusc/agent-workspace:vX.Y` (ex: `v0.2`)
+* `git.rusc.local/rusc/agent-workspace:vX` (ex: `v0`)
+* `git.rusc.local/rusc/agent-workspace:<commit-sha>`
 
 ### 5. Actualització del Pod a K3s
 Per forçar el reinici del deployment amb la nova imatge construïda:
