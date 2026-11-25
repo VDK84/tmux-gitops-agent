@@ -129,9 +129,9 @@ jobs:
           git tag -a "$NEW_TAG" -m "Release $NEW_TAG [skip ci]"
 
           # Punts d'accés remots autenticats
-          REMOTE_URL="${SERVER}/${REPO}.git"
-          AUTH_URL="https://${ACTOR}:${TOKEN}@${REMOTE_URL#https://}"
-          AUTH_URL="https://${ACTOR}:${TOKEN}@${AUTH_URL#http://}"
+          PROTO="${SERVER%%://*}"
+          HOST_PORT_PATH="${SERVER#*://}"
+          AUTH_URL="${PROTO}://${ACTOR}:${TOKEN}@${HOST_PORT_PATH}/${REPO}.git"
 
           git push "$AUTH_URL" "$NEW_TAG"
 
